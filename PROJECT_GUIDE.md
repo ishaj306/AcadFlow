@@ -3,9 +3,9 @@
 *Smart Practical Batch & Timetable Generator — a college scheduling ERP.*
 
 This is the one document to read to understand the whole project: what it is, how
-to run it, how it's built, every command, every important endpoint, and what to
-say in an interview. Written for someone comfortable with basic programming but
-new to Spring Boot / backend development.
+to run it, how it's built, every command, and every important endpoint. Written
+for someone comfortable with basic programming but new to Spring Boot / backend
+development.
 
 ---
 
@@ -461,37 +461,7 @@ require the `ADMIN` or `HOD` role.
 
 ---
 
-## 18. Interview prep
-
-### 10 concepts to know
-1. **Layered architecture** — Controller → Service → Repository → Database, each with one responsibility.
-2. **Dependency injection** — Spring creates objects and passes them into constructors; you never `new` a service.
-3. **REST API** — endpoints are URL + HTTP verb, returning JSON.
-4. **Spring Data JPA** — database access without SQL; queries derived from method names.
-5. **Entities & ORM** — `@Entity` classes map to tables; objects ↔ rows.
-6. **DTOs vs entities** — DTOs are the shape you expose to clients; entities are the DB shape. Keeping them separate protects internals.
-7. **`@Transactional`** — a method runs as one atomic database transaction.
-8. **Spring Security + JWT** — token-based login and role-based access with `@PreAuthorize`.
-9. **JSON serialization (Jackson)** — automatic Java ↔ JSON; `@JsonNaming` bridges naming styles.
-10. **Service-to-service communication** — Java calls a separate Python service over HTTP with `RestClient`; the two are decoupled.
-
-### 60-second elevator pitch
-> "BatchMaker is a college timetable generator with a Spring Boot backend, a
-> React/TypeScript frontend, and a separate Python optimisation service. The
-> backend is a layered REST API — controllers handle HTTP, services hold the
-> logic, and Spring Data JPA repositories talk to an H2 database managed by
-> Flyway. Login and permissions use Spring Security with JWT and `@PreAuthorize`.
-> The scheduling math runs in Python with Google OR-Tools, and the backend calls
-> it over HTTP via Spring's `RestClient`, bridging camelCase and snake_case with
-> Jackson. A feature I'm proud of is a feasibility pre-check that tells the user,
-> before generating, whether their labs, faculty and time slots are even enough
-> to build a valid timetable — and if not, exactly what to add. Building it taught
-> me clean layering, dependency injection, DTO design, and making two services in
-> different languages work together."
-
----
-
-## 19. Glossary
+## 18. Glossary
 
 | Term | Meaning |
 |---|---|
