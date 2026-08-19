@@ -1,4 +1,11 @@
-# Smart Practical Batch & Timetable Generator
+# AcadFlow — Smart Practical Batch & Timetable Generator
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![Java](https://img.shields.io/badge/Java-21-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-6DB33F)
+![React](https://img.shields.io/badge/React-19-61DAFB)
+![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB)
+![OR-Tools](https://img.shields.io/badge/OR--Tools-CP--SAT-4285F4)
 
 Practical batch allocation, laboratory timetable generation, conflict detection,
 automatic rescheduling and faculty workload optimisation for a college.
@@ -6,6 +13,26 @@ automatic rescheduling and faculty workload optimisation for a college.
 Timetables are produced by a **deterministic constraint solver** (Google OR-Tools
 CP-SAT), not by a language model. Hard constraints are structural and cannot be
 traded away; soft constraints form a weighted objective.
+
+> **New to the project?** Read [`PROJECT_GUIDE.md`](PROJECT_GUIDE.md) — a single
+> document covering setup, architecture, every command, the full API, and a
+> beginner-friendly explanation of the Spring Boot backend.
+
+## Highlights
+
+- **Feasibility pre-check** — before generating, a fast resource audit reports
+  whether a schedule can exist at all, and if not, exactly what to add (another
+  lab, day, or teacher).
+- **Multiple options (A/B/C)** — generate three drafts tuned for different
+  priorities (balanced, faculty-friendly, lab-efficient) and compare their scores.
+- **Tunable priorities** — sliders expose the solver's soft-constraint weights.
+- **What-if simulator** — test a closed lab, an absent teacher, or higher
+  enrolment against the current data without saving anything.
+- **Manual grid editing** — move, reassign, or delete sessions on a draft, with
+  instant re-validation.
+- **Timetable assistant** — ask about the published timetable in plain language
+  (grounded in real data, not a language model).
+- **Roster parser** — paste free-form student text and preview a batch split.
 
 ---
 
@@ -31,7 +58,8 @@ PostgreSQL means activating the `postgres` profile and pointing it at a server
 ## Running it
 
 Prerequisites: **JDK 21**, **Python 3.11+**, **Node 20+**. Maven is not required —
-the repo bootstraps its own copy into `tools/` (already present after first setup).
+the backend ships a Maven wrapper (`./mvnw`) that downloads the right Maven
+version on first use.
 
 Start the three services in separate terminals.
 
@@ -45,11 +73,13 @@ cd solver && python -m venv .venv && .venv/Scripts/python.exe -m pip install -r 
 cd solver && .venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8090
 ```
 
-**2 — Backend API** (seeds a full demo dataset on first run)
+**2 — Backend API** (creates the admin account on an empty database)
 
 ```bash
-cd backend && ../tools/apache-maven-3.9.16/bin/mvn.cmd spring-boot:run
+cd backend && ./mvnw spring-boot:run
 ```
+
+> On Windows PowerShell use `.\mvnw spring-boot:run`.
 
 **3 — Frontend**
 
@@ -301,6 +331,16 @@ Honest list of what is **not** implemented:
 - **Service-level test coverage is still thin.** Batch generation, conflict
   detection and rescheduling are exercised by the end-to-end scripts but do not
   yet have dedicated unit/integration tests.
-- **Optional AI assistant** (natural-language timetable queries) is not built.
-  The core system is deliberately solver-driven.
+- **The timetable assistant is keyword-based, not a language model.** It answers
+  from real published-timetable data by matching intents (a day, division,
+  faculty, lab, or count); it is wired so an LLM call could be dropped in behind
+  the same endpoint later.
+- **Manual editing covers existing sessions** (move / reassign / delete), not
+  adding a brand-new session from scratch.
 - Notifications are in-app only; email and messaging integrations are not built.
+
+---
+
+## License
+
+Released under the [MIT License](LICENSE). © 2026 ishaj306.
