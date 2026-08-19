@@ -42,8 +42,7 @@ Thumbs.db
 .env
 .env.local
 
-# Claude Code local config & personal notes (not for publishing)
-.claude/
+# Local tool config & personal notes (not for publishing)
 .Rhistory
 
 # Friend's separate project — not part of AcadFlow
