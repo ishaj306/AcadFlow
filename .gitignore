@@ -1,0 +1,50 @@
+# Build output
+target/
+dist/
+build/
+*.class
+*.jar
+!**/gradle/wrapper/gradle-wrapper.jar
+
+# Local toolchain (bootstrapped Maven)
+tools/
+
+# Node
+node_modules/
+.vite/
+*.local
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Database files (H2 embedded)
+data/
+*.mv.db
+*.trace.db
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs / env
+*.log
+.env
+.env.local
+
+# Claude Code local config & personal notes (not for publishing)
+.claude/
+.Rhistory
+
+# Friend's separate project — not part of AcadFlow
+ai-timetable-generator/

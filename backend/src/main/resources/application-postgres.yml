@@ -1,0 +1,14 @@
+# Activate with: --spring.profiles.active=postgres
+# The Flyway migrations and JPA mappings are written portably, so the only
+# change required to move off H2 is this connection block.
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/batchmaker
+    driver-class-name: org.postgresql.Driver
+    username: batchmaker
+    password: batchmaker
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  h2:
+    console:
+      enabled: false

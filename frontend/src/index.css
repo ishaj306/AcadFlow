@@ -1,0 +1,81 @@
+@import 'tailwindcss';
+
+/*
+ * College administration palette: navy primary, slate/grey neutrals, white
+ * surfaces, and four status colours. Deliberately flat - no gradients as a
+ * primary visual language, no glow, no glass.
+ */
+@theme {
+  --color-navy-50: #eef2f7;
+  --color-navy-100: #d9e2ec;
+  --color-navy-200: #bcccdc;
+  --color-navy-300: #9fb3c8;
+  --color-navy-400: #829ab1;
+  --color-navy-500: #627d98;
+  --color-navy-600: #486581;
+  --color-navy-700: #334e68;
+  --color-navy-800: #243b53;
+  --color-navy-900: #102a43;
+
+  --color-ok-50: #ecfdf3;
+  --color-ok-600: #15803d;
+  --color-ok-700: #166534;
+
+  --color-warn-50: #fffbeb;
+  --color-warn-600: #b45309;
+  --color-warn-700: #92400e;
+
+  --color-danger-50: #fef2f2;
+  --color-danger-600: #b91c1c;
+  --color-danger-700: #991b1b;
+
+  --color-info-50: #eff6ff;
+  --color-info-600: #1d4ed8;
+  --color-info-700: #1e40af;
+
+  --font-sans: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #f4f6f8;
+  color: var(--color-navy-900);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular figures keep numeric columns aligned in dense administrative tables. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Thin, unobtrusive scrollbars for the many scrollable panes. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-navy-200) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-navy-200);
+  border-radius: 6px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
