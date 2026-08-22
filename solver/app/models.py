@@ -40,6 +40,10 @@ class FacultyIn(BaseModel):
     unavailable: list[tuple[DayName, int]] = Field(default_factory=list)
     # Soft constraint S1.
     preferred: list[tuple[DayName, int]] = Field(default_factory=list)
+    # Minutes already committed to fixed lectures/meetings this week. Added to
+    # the practical load so workload balancing (S2) and the overload guard see
+    # "fixed + practical", not practical alone.
+    base_load_minutes: int = 0
 
 
 class PracticalIn(BaseModel):

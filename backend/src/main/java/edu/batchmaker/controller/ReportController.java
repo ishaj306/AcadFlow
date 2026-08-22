@@ -7,7 +7,9 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/reports")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN','HOD')")
 public class ReportController {
 
     private static final MediaType XLSX =
@@ -31,6 +34,14 @@ public class ReportController {
     public ResponseEntity<byte[]> timetable(@RequestParam(defaultValue = "xlsx") String format) {
         ExportFormat fmt = parse(format);
         return file(exportService.timetable(fmt), "timetable", fmt);
+    }
+
+    /** Export a specific timetable by id - works for an unpublished draft too. */
+    @GetMapping("/timetable/{timetableId}/export")
+    public ResponseEntity<byte[]> timetableById(@PathVariable Long timetableId,
+                                                @RequestParam(defaultValue = "xlsx") String format) {
+        ExportFormat fmt = parse(format);
+        return file(exportService.timetable(timetableId, fmt), "timetable-" + timetableId, fmt);
     }
 
     @GetMapping("/workload/export")

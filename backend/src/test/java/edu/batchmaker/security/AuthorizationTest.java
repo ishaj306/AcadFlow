@@ -57,6 +57,27 @@ class AuthorizationTest {
     }
 
     @Test
+    @WithMockUser(roles = "STUDENT")
+    void studentCannotViewFacultyWorkloadSummary() throws Exception {
+        mockMvc.perform(get("/api/workload"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "STUDENT")
+    void studentCannotExportReports() throws Exception {
+        mockMvc.perform(get("/api/reports/timetable/export"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "STUDENT")
+    void studentCannotCreateFixedCommitment() throws Exception {
+        mockMvc.perform(delete("/api/fixed-commitments/1").with(csrf()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @WithMockUser(roles = "HOD")
     void hodMayListStudents() throws Exception {
         mockMvc.perform(get("/api/students"))

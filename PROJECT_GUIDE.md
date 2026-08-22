@@ -337,6 +337,9 @@ Controller → Spring converts to JSON → Browser draws the FeasibilityPanel
 | **Manual editing** | Timetable (draft) → *Edit sessions* | Click a session to move it, reassign faculty/lab, or delete it. Re-validated instantly. |
 | **Assistant** | *Assistant* button (top bar) | Ask about the published timetable in plain English (a day, division, faculty, lab, or a count). |
 | **Roster parser** | Students → *Paste a roster* | Paste raw text → extracts students + suggests a batch split (preview only). |
+| **Fixed lectures** | *Fixed Lectures* | Record recurring lectures / meetings / reserved labs. They block their slot for the named faculty and/or lab, and add to that teacher's total weekly load. |
+| **Batch swap** | Batches → *Swap two students* | Exchange two consenting students between their batches for a subject; a one-for-one swap that keeps both batch sizes intact. |
+| **Export a timetable** | Timetable → *Excel / PDF* | Download the selected timetable (draft or published) as a real `.xlsx` or PDF built on the server. |
 
 **Hard vs soft constraints:**
 - **Hard** (never broken): faculty can't be in two places at once, a lab holds one class at a time, students in one batch can't have two classes at once, lab must be big enough and the right type, faculty must be qualified and available.
@@ -376,13 +379,14 @@ require the `ADMIN` or `HOD` role.
 | `/api/faculty` | Faculty CRUD, availability, leave |
 | `/api/subjects` | Subject CRUD, lab types |
 | `/api/labs` | Laboratory CRUD |
-| `/api/batches` | Practical batch generation |
+| `/api/fixed-commitments` | Fixed lectures / meetings / reserved labs (GET, POST, DELETE) **[new]** |
+| `/api/batches` | Practical batch generation, **`POST /swap`** (exchange two students) **[new]** |
 | `/api/conflicts` | List/resolve detected conflicts |
 | `/api/rescheduling` | Auto-reschedule on faculty leave / lab maintenance |
 | `/api/workload` | Faculty workload analysis |
 | `/api/dashboard` | Dashboard data |
 | `/api/config` | Departments, terms, working days, time slots, weights |
-| `/api/reports` | PDF/Excel exports |
+| `/api/reports` | PDF/Excel exports; **`GET /timetable/{id}/export`** exports a specific draft or published timetable **[new]** |
 | `/api/notifications` | User notifications |
 | `/api/setup` | Setup-checklist status |
 | `/api/health` | Backend health check |

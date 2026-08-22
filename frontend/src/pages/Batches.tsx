@@ -30,6 +30,9 @@ export default function Batches() {
   const [banner, setBanner] = useState<{ tone: 'ok' | 'danger' | 'warn'; text: string } | null>(null)
   const [subjectFilter, setSubjectFilter] = useState('')
   const [expanded, setExpanded] = useState<number | null>(null)
+  const [swapSubject, setSwapSubject] = useState('')
+  const [swapA, setSwapA] = useState('')
+  const [swapB, setSwapB] = useState('')
 
   const departments = useQuery({
     queryKey: ['departments'],
@@ -79,6 +82,44 @@ export default function Batches() {
       setBanner({
         tone: 'danger',
         text: error instanceof ApiError ? error.message : 'Batch generation failed.',
+      }),
+  })
+
+  // Students available to swap: everyone enrolled in a batch of the chosen
+  // subject, labelled with their current batch.
+  const swapStudents = useMemo(() => {
+    if (!swapSubject) return []
+    return (batches.data ?? [])
+      .filter((b) => b.subjectId === Number(swapSubject))
+      .flatMap((b) =>
+        b.students.map((s) => ({
+          studentId: s.studentId,
+          label: `${s.rollNumber} — ${s.name} (${b.batchName})`,
+        })),
+      )
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [batches.data, swapSubject])
+
+  const swap = useMutation({
+    mutationFn: () =>
+      api<Batch[]>('/batches/swap', {
+        method: 'POST',
+        body: {
+          subjectId: Number(swapSubject),
+          studentAId: Number(swapA),
+          studentBId: Number(swapB),
+        },
+      }),
+    onSuccess: () => {
+      setBanner({ tone: 'ok', text: 'Students swapped between their batches.' })
+      setSwapA('')
+      setSwapB('')
+      queryClient.invalidateQueries({ queryKey: ['batches'] })
+    },
+    onError: (error) =>
+      setBanner({
+        tone: 'danger',
+        text: error instanceof ApiError ? error.message : 'The swap failed.',
       }),
   })
 
@@ -161,6 +202,65 @@ export default function Batches() {
             >
               <Icon name="play" className="h-3.5 w-3.5" />
               {generate.isPending ? 'Generating…' : 'Generate'}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <Card
+        className="mb-4"
+        title="Swap two students"
+        description="With both students' consent, exchange them between their batches for one subject. It is a one-for-one swap, so neither batch changes size."
+      >
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Field label="Subject">
+            <Select
+              value={swapSubject}
+              onChange={(e) => {
+                setSwapSubject(e.target.value)
+                setSwapA('')
+                setSwapB('')
+              }}
+            >
+              <option value="">Select…</option>
+              {(subjects.data ?? []).map((subject) => (
+                <option key={subject.id} value={subject.id}>
+                  {subject.subjectName}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Student A">
+            <Select value={swapA} onChange={(e) => setSwapA(e.target.value)} disabled={!swapSubject}>
+              <option value="">Select…</option>
+              {swapStudents.map((s) => (
+                <option key={s.studentId} value={s.studentId}>
+                  {s.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Student B">
+            <Select value={swapB} onChange={(e) => setSwapB(e.target.value)} disabled={!swapSubject}>
+              <option value="">Select…</option>
+              {swapStudents
+                .filter((s) => String(s.studentId) !== swapA)
+                .map((s) => (
+                  <option key={s.studentId} value={s.studentId}>
+                    {s.label}
+                  </option>
+                ))}
+            </Select>
+          </Field>
+          <div className="flex items-end">
+            <Button
+              variant="primary"
+              className="w-full justify-center"
+              disabled={!swapA || !swapB || swapA === swapB || swap.isPending}
+              onClick={() => swap.mutate()}
+            >
+              <Icon name="reschedule" className="h-3.5 w-3.5" />
+              {swap.isPending ? 'Swapping…' : 'Swap'}
             </Button>
           </div>
         </div>

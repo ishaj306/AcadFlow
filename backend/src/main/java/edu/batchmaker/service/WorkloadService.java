@@ -25,6 +25,7 @@ public class WorkloadService {
     private final TimetableEntryRepository entryRepository;
     private final TimeSlotRepository timeSlotRepository;
     private final WorkingDayRepository workingDayRepository;
+    private final FixedCommitmentRepository fixedCommitmentRepository;
 
     @Transactional(readOnly = true)
     public WorkloadSummaryResponse summary(Long timetableId, Long departmentId) {
@@ -46,6 +47,10 @@ public class WorkloadService {
             counts.merge(facultyId, 1, Integer::sum);
         }
 
+        // Fixed lecture / commitment minutes per faculty, so utilisation reflects
+        // "fixed + practical" rather than practical hours alone (spec section 11).
+        Map<Long, Integer> fixedMinutes = fixedLoadByFaculty(timetable.getAcademicTerm().getId());
+
         int totalTeachingSlots = timeSlotRepository.findSchedulableSlots().size()
                 * workingDayRepository.findByActiveTrueOrderByDayOrderAsc().size();
 
@@ -55,9 +60,11 @@ public class WorkloadService {
 
         List<FacultyWorkloadResponse> rows = faculty.stream().map(member -> {
             int assigned = minutes.getOrDefault(member.getId(), 0);
+            int fixed = fixedMinutes.getOrDefault(member.getId(), 0);
+            int total = assigned + fixed;
             int limit = member.getMaxWeeklyHours() * 60;
-            double utilization = limit == 0 ? 0 : Math.round(assigned * 1000.0 / limit) / 10.0;
-            int occupiedSlots = (int) Math.ceil(assigned / 60.0);
+            double utilization = limit == 0 ? 0 : Math.round(total * 1000.0 / limit) / 10.0;
+            int occupiedSlots = (int) Math.ceil(total / 60.0);
 
             List<String> subjects = facultySubjectRepository.findByFacultyId(member.getId()).stream()
                     .map(fs -> fs.getSubject().getSubjectName())
@@ -72,6 +79,8 @@ public class WorkloadService {
                     member.getDepartment().getCode(),
                     assigned,
                     Math.round(assigned / 60.0 * 10) / 10.0,
+                    Math.round(fixed / 60.0 * 10) / 10.0,
+                    Math.round(total / 60.0 * 10) / 10.0,
                     member.getMaxWeeklyHours(),
                     utilization,
                     counts.getOrDefault(member.getId(), 0),
@@ -84,11 +93,11 @@ public class WorkloadService {
                 .mapToDouble(FacultyWorkloadResponse::utilizationPercent)
                 .summaryStatistics();
 
-        List<Double> assignedHours = rows.stream()
-                .map(FacultyWorkloadResponse::assignedHours)
+        List<Double> totalHours = rows.stream()
+                .map(FacultyWorkloadResponse::totalLoadHours)
                 .toList();
-        double spread = assignedHours.isEmpty() ? 0
-                : Math.round((Collections.max(assignedHours) - Collections.min(assignedHours)) * 10) / 10.0;
+        double spread = totalHours.isEmpty() ? 0
+                : Math.round((Collections.max(totalHours) - Collections.min(totalHours)) * 10) / 10.0;
 
         return new WorkloadSummaryResponse(
                 timetable.getId(),
@@ -110,6 +119,21 @@ public class WorkloadService {
                 .filter(row -> row.facultyId().equals(facultyId))
                 .findFirst()
                 .orElseThrow(() -> ApiException.notFound("Faculty workload", facultyId));
+    }
+
+    /** Fixed lecture / commitment minutes per faculty for a term. */
+    private Map<Long, Integer> fixedLoadByFaculty(Long termId) {
+        Map<Long, Integer> minutes = new HashMap<>();
+        fixedCommitmentRepository.findForTerm(termId).forEach(commitment -> {
+            if (commitment.getFaculty() == null) {
+                return;
+            }
+            int m = (int) Duration.between(
+                    commitment.getStartTimeSlot().getStartTime(),
+                    commitment.getEndTimeSlot().getEndTime()).toMinutes();
+            minutes.merge(commitment.getFaculty().getId(), m, Integer::sum);
+        });
+        return minutes;
     }
 
     /** Utilisation bands from spec section 25. */

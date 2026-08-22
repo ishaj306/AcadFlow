@@ -54,7 +54,13 @@ public class ReportExportService {
 
     @Transactional(readOnly = true)
     public byte[] timetable(ExportFormat format) {
-        return render(buildTimetable(), format);
+        return render(buildTimetable(timetableService.current()), format);
+    }
+
+    /** Export any specific timetable by id - including an unpublished draft. */
+    @Transactional(readOnly = true)
+    public byte[] timetable(Long timetableId, ExportFormat format) {
+        return render(buildTimetable(timetableService.detail(timetableId)), format);
     }
 
     @Transactional(readOnly = true)
@@ -66,8 +72,7 @@ public class ReportExportService {
 
     // ------------------------------------------------------------- report data
 
-    private Report buildTimetable() {
-        TimetableDetailResponse detail = timetableService.current();
+    private Report buildTimetable(TimetableDetailResponse detail) {
         List<List<String>> rows = new ArrayList<>();
         for (TimetableEntryResponse e : detail.entries()) {
             rows.add(List.of(
@@ -83,8 +88,9 @@ public class ReportExportService {
                     n(e.labName()),
                     n(e.labLocation())));
         }
-        String subtitle = detail.timetable().name() + " · " + detail.timetable().academicTermLabel();
-        return new Report("Published Timetable", subtitle,
+        String subtitle = detail.timetable().name() + " · " + detail.timetable().academicTermLabel()
+                + " · " + titleCase(detail.timetable().status().name());
+        return new Report("Practical Timetable", subtitle,
                 List.of("Day", "Start", "End", "Code", "Subject", "Batch", "Division",
                         "Students", "Faculty", "Laboratory", "Location"),
                 rows);
@@ -100,6 +106,8 @@ public class ReportExportService {
                     n(f.designation()),
                     n(f.departmentCode()),
                     trim1(f.assignedHours()),
+                    trim1(f.fixedLoadHours()),
+                    trim1(f.totalLoadHours()),
                     String.valueOf(f.maxWeeklyHours()),
                     trim1(f.utilizationPercent()),
                     String.valueOf(f.practicalCount()),
@@ -108,8 +116,8 @@ public class ReportExportService {
         String subtitle = "Average utilisation " + trim1(summary.averageUtilizationPercent())
                 + "% · " + summary.balanceVerdict();
         return new Report("Faculty Workload", subtitle,
-                List.of("Code", "Faculty", "Designation", "Department", "Assigned h",
-                        "Maximum h", "Utilisation %", "Practicals", "Status"),
+                List.of("Code", "Faculty", "Designation", "Department", "Practical h", "Fixed h",
+                        "Total h", "Maximum h", "Utilisation %", "Practicals", "Status"),
                 rows);
     }
 

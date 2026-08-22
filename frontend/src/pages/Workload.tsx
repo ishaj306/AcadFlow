@@ -36,7 +36,7 @@ export default function Workload() {
     <>
       <PageHeader
         title="Faculty workload"
-        description={`Assigned practical hours against each member's weekly limit, from ${data.timetableName}.`}
+        description={`Total weekly load — fixed lectures plus practicals — against each member's limit, from ${data.timetableName}.`}
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -78,7 +78,9 @@ export default function Workload() {
             <tr>
               <Th>Faculty</Th>
               <Th>Designation</Th>
-              <Th className="text-right">Assigned</Th>
+              <Th className="text-right">Practical</Th>
+              <Th className="text-right">Fixed</Th>
+              <Th className="text-right">Total</Th>
               <Th className="text-right">Maximum</Th>
               <Th className="w-48">Utilisation</Th>
               <Th className="text-right">Practicals</Th>
@@ -97,7 +99,9 @@ export default function Workload() {
                 </div>
               </Td>
               <Td className="text-[12px] text-navy-600">{row.designation}</Td>
-              <Td className="tabular text-right font-medium">{row.assignedHours}h</Td>
+              <Td className="tabular text-right">{row.assignedHours}h</Td>
+              <Td className="tabular text-right text-navy-500">{row.fixedLoadHours}h</Td>
+              <Td className="tabular text-right font-medium">{row.totalLoadHours}h</Td>
               <Td className="tabular text-right text-navy-500">{row.maxWeeklyHours}h</Td>
               <Td>
                 <div className="tabular mb-1 text-[12px] text-navy-600">

@@ -82,7 +82,7 @@ public class DashboardService {
                 : workload.faculty().stream()
                         .sorted(Comparator.comparingDouble(f -> -f.utilizationPercent()))
                         .map(f -> new DashboardResponse.WorkloadBar(
-                                f.facultyName(), f.employeeCode(), f.assignedHours(),
+                                f.facultyName(), f.employeeCode(), f.totalLoadHours(),
                                 f.maxWeeklyHours(), f.utilizationPercent(), f.status()))
                         .toList();
 

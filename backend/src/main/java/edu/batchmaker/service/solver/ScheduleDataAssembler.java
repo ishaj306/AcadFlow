@@ -38,6 +38,7 @@ public class ScheduleDataAssembler {
     private final PracticalRepository practicalRepository;
     private final BatchStudentRepository batchStudentRepository;
     private final OptimizationWeightRepository weightRepository;
+    private final FixedCommitmentRepository fixedCommitmentRepository;
 
     /** Everything the solver needs, plus the lookups the caller needs afterwards. */
     public record Snapshot(SolverPayload.Request request,
@@ -68,6 +69,10 @@ public class ScheduleDataAssembler {
         Map<Long, List<List<Object>>> labCells = labUnavailableCells();
         Map<Long, Set<DayOfWeek>> leaveBlockedDays = fullTermLeaveDays(term, days);
 
+        // Fixed commitments (lectures/meetings/reserved labs) block their cells
+        // for the named faculty and/or lab, and add to faculty base load.
+        FixedCommitments fixed = fixedCommitments(term, slots);
+
         List<SolverPayload.FacultyIn> facultyIn = faculty.stream().map(f -> {
             var cells = facultyCells.getOrDefault(f.getId(), Map.of());
             List<List<Object>> unavailable = new ArrayList<>(
@@ -79,17 +84,23 @@ public class ScheduleDataAssembler {
                     unavailable.add(List.of(day.name(), slot.getId()));
                 }
             }
+            unavailable.addAll(fixed.facultyCells().getOrDefault(f.getId(), List.of()));
             return new SolverPayload.FacultyIn(
                     f.getId(),
                     f.getMaxWeeklyHours() * 60,
                     qualifications.getOrDefault(f.getId(), List.of()),
                     unavailable,
-                    cells.getOrDefault(AvailabilityType.PREFERRED, List.of()));
+                    cells.getOrDefault(AvailabilityType.PREFERRED, List.of()),
+                    fixed.facultyLoadMinutes().getOrDefault(f.getId(), 0));
         }).toList();
 
         List<SolverPayload.LabIn> labsIn = labs.stream()
-                .map(l -> new SolverPayload.LabIn(l.getId(), l.getCapacity(), l.getLabType(),
-                        labCells.getOrDefault(l.getId(), List.of())))
+                .map(l -> {
+                    List<List<Object>> unavailable =
+                            new ArrayList<>(labCells.getOrDefault(l.getId(), List.of()));
+                    unavailable.addAll(fixed.labCells().getOrDefault(l.getId(), List.of()));
+                    return new SolverPayload.LabIn(l.getId(), l.getCapacity(), l.getLabType(), unavailable);
+                })
                 .toList();
 
         Map<Long, Integer> batchSizes = new HashMap<>();
@@ -270,6 +281,52 @@ public class ScheduleDataAssembler {
             }
         });
         return result;
+    }
+
+    /** Blocked cells (per faculty, per lab) and base load (per faculty) from fixed commitments. */
+    private record FixedCommitments(Map<Long, List<List<Object>>> facultyCells,
+                                    Map<Long, List<List<Object>>> labCells,
+                                    Map<Long, Integer> facultyLoadMinutes) {
+    }
+
+    /**
+     * Expands each fixed commitment in force for the term into blocked (day, slot)
+     * cells for its faculty member and/or laboratory, and totals the minutes each
+     * faculty member spends on commitments so the workload objective can add them
+     * to the practical load.
+     */
+    private FixedCommitments fixedCommitments(AcademicTerm term, List<TimeSlot> slots) {
+        Map<Long, List<List<Object>>> facultyCells = new HashMap<>();
+        Map<Long, List<List<Object>>> labCells = new HashMap<>();
+        Map<Long, Integer> facultyLoad = new HashMap<>();
+
+        for (FixedCommitment commitment : fixedCommitmentRepository.findForTerm(term.getId())) {
+            int startOrder = commitment.getStartTimeSlot().getSlotOrder();
+            int endOrder = commitment.getEndTimeSlot().getSlotOrder();
+            String day = commitment.getDayOfWeek().name();
+
+            List<TimeSlot> covered = slots.stream()
+                    .filter(s -> s.getSlotOrder() >= startOrder && s.getSlotOrder() <= endOrder)
+                    .toList();
+
+            if (commitment.getFaculty() != null) {
+                Long facultyId = commitment.getFaculty().getId();
+                List<List<Object>> cells = facultyCells.computeIfAbsent(facultyId, k -> new ArrayList<>());
+                covered.forEach(s -> cells.add(List.of(day, s.getId())));
+            }
+            if (commitment.getLab() != null) {
+                Long labId = commitment.getLab().getId();
+                List<List<Object>> cells = labCells.computeIfAbsent(labId, k -> new ArrayList<>());
+                covered.forEach(s -> cells.add(List.of(day, s.getId())));
+            }
+            if (commitment.getFaculty() != null) {
+                int minutes = (int) java.time.Duration.between(
+                        commitment.getStartTimeSlot().getStartTime(),
+                        commitment.getEndTimeSlot().getEndTime()).toMinutes();
+                facultyLoad.merge(commitment.getFaculty().getId(), minutes, Integer::sum);
+            }
+        }
+        return new FixedCommitments(facultyCells, labCells, facultyLoad);
     }
 
     /** Objective weights, overridable per installation from the database. */

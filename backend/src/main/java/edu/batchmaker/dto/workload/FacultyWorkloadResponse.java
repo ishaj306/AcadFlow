@@ -10,6 +10,10 @@ public record FacultyWorkloadResponse(
         String departmentCode,
         int assignedMinutes,
         double assignedHours,
+        /** Fixed lecture / commitment hours per week. */
+        double fixedLoadHours,
+        /** Practical + fixed, the figure utilisation is measured against. */
+        double totalLoadHours,
         int maxWeeklyHours,
         double utilizationPercent,
         int practicalCount,

@@ -202,9 +202,19 @@ public class BatchGenerationService {
             batchStudentRepository.deleteByBatchId(batch.getId());
             batchStudentRepository.flush();
 
+            Long subjectId = batch.getSubject().getId();
             for (Long studentId : studentIds.stream().distinct().toList()) {
                 Student student = studentRepository.findById(studentId)
                         .orElseThrow(() -> ApiException.notFound("Student", studentId));
+                // A student may sit in only one batch per subject; otherwise the
+                // same person owes the practical twice and can never be free of a
+                // clash. The clearing delete above is already committed, so the
+                // check runs against the other batches of this subject.
+                if (batchStudentRepository.existsInAnotherBatchForSubject(studentId, subjectId, batch.getId())) {
+                    throw new ApiException(ErrorCode.VALIDATION_FAILED,
+                            student.getName() + " is already in another batch for "
+                                    + batch.getSubject().getSubjectName() + ".");
+                }
                 BatchStudent membership = new BatchStudent();
                 membership.setBatch(batch);
                 membership.setStudent(student);
@@ -218,6 +228,51 @@ public class BatchGenerationService {
         auditService.record("ADJUST", "StudentBatch", null, null,
                 request.assignments().size() + " batch(es) adjusted manually");
         return updated;
+    }
+
+    /**
+     * Swaps two students between their batches for one subject. Both students
+     * must already be enrolled in a (different) batch of that subject; the
+     * exchange is one-for-one, so neither batch changes size.
+     */
+    @Transactional
+    public List<BatchResponse> swap(edu.batchmaker.dto.batch.BatchSwapRequest request) {
+        if (request.studentAId().equals(request.studentBId())) {
+            throw ApiException.validation("Choose two different students to swap.");
+        }
+
+        BatchStudent membershipA = membershipForSubject(request.studentAId(), request.subjectId());
+        BatchStudent membershipB = membershipForSubject(request.studentBId(), request.subjectId());
+
+        StudentBatch batchA = membershipA.getBatch();
+        StudentBatch batchB = membershipB.getBatch();
+        if (batchA.getId().equals(batchB.getId())) {
+            throw ApiException.validation("Both students are already in the same batch, so there is nothing to swap.");
+        }
+
+        // One-for-one exchange keeps each batch's size unchanged.
+        membershipA.setBatch(batchB);
+        membershipB.setBatch(batchA);
+        batchStudentRepository.save(membershipA);
+        batchStudentRepository.save(membershipB);
+
+        auditService.record("SWAP", "StudentBatch", null, null,
+                "students " + request.studentAId() + "<->" + request.studentBId()
+                        + " between " + batchA.getBatchName() + " and " + batchB.getBatchName());
+
+        return List.of(
+                BatchResponse.from(batchA, membersOf(batchA.getId())),
+                BatchResponse.from(batchB, membersOf(batchB.getId())));
+    }
+
+    private BatchStudent membershipForSubject(Long studentId, Long subjectId) {
+        List<BatchStudent> memberships = batchStudentRepository.findMembershipsForSubject(studentId, subjectId);
+        if (memberships.isEmpty()) {
+            Student student = studentRepository.findById(studentId)
+                    .orElseThrow(() -> ApiException.notFound("Student", studentId));
+            throw ApiException.validation(student.getName() + " is not enrolled in any batch for this subject.");
+        }
+        return memberships.get(0);
     }
 
     @Transactional

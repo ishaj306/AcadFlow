@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ApiError, api, formatDateTime } from '../lib/api'
+import { ApiError, api, formatDateTime, getToken } from '../lib/api'
 import type {
   FeasibilityReport,
   GenerationResult,
@@ -45,6 +45,39 @@ export default function Timetable() {
   })
   const [editMode, setEditMode] = useState(false)
   const [editingEntry, setEditingEntry] = useState<TimetableEntry | null>(null)
+  const [exporting, setExporting] = useState<'xlsx' | 'pdf' | null>(null)
+
+  // Server-generated .xlsx / .pdf of the selected timetable — draft or published.
+  async function exportTimetable(format: 'xlsx' | 'pdf') {
+    if (activeId == null) return
+    setExporting(format)
+    try {
+      const res = await fetch(`/api/reports/timetable/${activeId}/export?format=${format}`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      })
+      if (!res.ok) {
+        let message = `Export failed (status ${res.status}).`
+        try {
+          const payload = await res.json()
+          if (payload?.message) message = payload.message
+        } catch {
+          /* binary or empty body */
+        }
+        throw new Error(message)
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `timetable-${activeId}.${format}`
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setBanner({ tone: 'danger', text: (err as Error).message })
+    } finally {
+      setExporting(null)
+    }
+  }
 
   const versions = useQuery({
     queryKey: ['timetables'],
@@ -566,6 +599,22 @@ export default function Timetable() {
                   {editMode ? 'Done editing' : 'Edit sessions'}
                 </Button>
               )}
+              <Button
+                size="sm"
+                disabled={exporting !== null || activeId == null}
+                onClick={() => exportTimetable('xlsx')}
+              >
+                <Icon name="download" className="h-3.5 w-3.5" />
+                {exporting === 'xlsx' ? 'Exporting…' : 'Excel'}
+              </Button>
+              <Button
+                size="sm"
+                disabled={exporting !== null || activeId == null}
+                onClick={() => exportTimetable('pdf')}
+              >
+                <Icon name="download" className="h-3.5 w-3.5" />
+                {exporting === 'pdf' ? 'Exporting…' : 'PDF'}
+              </Button>
               <Button size="sm" onClick={() => window.print()}>
                 <Icon name="download" className="h-3.5 w-3.5" />
                 Print

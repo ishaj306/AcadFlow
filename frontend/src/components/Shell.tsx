@@ -30,6 +30,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { to: '/faculty', label: 'Faculty', icon: 'faculty', roles: ['ADMIN', 'HOD'] },
       { to: '/subjects', label: 'Subjects', icon: 'subjects', roles: ['ADMIN', 'HOD'] },
       { to: '/laboratories', label: 'Laboratories', icon: 'labs', roles: ['ADMIN', 'HOD'] },
+      { to: '/fixed-lectures', label: 'Fixed Lectures', icon: 'clock', roles: ['ADMIN', 'HOD'] },
     ],
   },
   {

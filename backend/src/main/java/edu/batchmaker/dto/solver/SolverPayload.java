@@ -24,7 +24,8 @@ public final class SolverPayload {
 
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public record FacultyIn(Long id, Integer maxWeeklyMinutes, List<Long> qualifiedSubjectIds,
-                            List<List<Object>> unavailable, List<List<Object>> preferred) {
+                            List<List<Object>> unavailable, List<List<Object>> preferred,
+                            Integer baseLoadMinutes) {
     }
 
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)

@@ -38,6 +38,7 @@ public class ConflictDetectionService {
     private final HolidayRepository holidayRepository;
     private final TimeSlotRepository timeSlotRepository;
     private final LaboratoryRepository labRepository;
+    private final FixedCommitmentRepository fixedCommitmentRepository;
 
     /** A detected problem before it is persisted. */
     private record Finding(ConflictType type, Severity severity, String description, String resolution,
@@ -218,6 +219,28 @@ public class ConflictDetectionService {
         Map<Long, TimeSlot> slots = new HashMap<>();
         timeSlotRepository.findAll().forEach(s -> slots.put(s.getId(), s));
 
+        // Fixed lectures / meetings / reserved labs block their cells just like an
+        // unavailability, so a manual edit that drops a practical onto one is
+        // caught here even though the solver would never have placed it there.
+        Long termId = entries.get(0).getTimetable().getAcademicTerm().getId();
+        for (FixedCommitment commitment : fixedCommitmentRepository.findForTerm(termId)) {
+            int startOrder = commitment.getStartTimeSlot().getSlotOrder();
+            int endOrder = commitment.getEndTimeSlot().getSlotOrder();
+            for (TimeSlot slot : slots.values()) {
+                if (slot.getSlotOrder() < startOrder || slot.getSlotOrder() > endOrder) {
+                    continue;
+                }
+                if (commitment.getFaculty() != null) {
+                    facultyBlocked.add(commitment.getFaculty().getId() + "|"
+                            + commitment.getDayOfWeek() + "|" + slot.getId());
+                }
+                if (commitment.getLab() != null) {
+                    labBlocked.add(commitment.getLab().getId() + "|"
+                            + commitment.getDayOfWeek() + "|" + slot.getId());
+                }
+            }
+        }
+
         for (TimetableEntry entry : entries) {
             int students = (int) batchStudentRepository.countByBatchId(entry.getBatch().getId());
 
@@ -344,7 +367,7 @@ public class ConflictDetectionService {
         return findings;
     }
 
-    /** Weekly hour limits (spec section 26). */
+    /** Weekly hour limits (spec section 26), counting fixed lectures + practicals. */
     private List<Finding> workloadConflicts(List<TimetableEntry> entries) {
         Map<Long, Integer> minutes = new HashMap<>();
         Map<Long, Faculty> faculty = new HashMap<>();
@@ -353,14 +376,30 @@ public class ConflictDetectionService {
             minutes.merge(entry.getFaculty().getId(), durationMinutes(entry), Integer::sum);
         }
 
+        // Fold in fixed-lecture minutes so overload reflects total weekly load.
+        Long termId = entries.get(0).getTimetable().getAcademicTerm().getId();
+        Map<Long, Integer> fixedMinutes = new HashMap<>();
+        for (FixedCommitment commitment : fixedCommitmentRepository.findForTerm(termId)) {
+            if (commitment.getFaculty() == null) {
+                continue;
+            }
+            int m = (int) Duration.between(
+                    commitment.getStartTimeSlot().getStartTime(),
+                    commitment.getEndTimeSlot().getEndTime()).toMinutes();
+            fixedMinutes.merge(commitment.getFaculty().getId(), m, Integer::sum);
+        }
+
         List<Finding> findings = new ArrayList<>();
-        minutes.forEach((facultyId, assigned) -> {
+        minutes.forEach((facultyId, practical) -> {
             Faculty member = faculty.get(facultyId);
+            int assigned = practical + fixedMinutes.getOrDefault(facultyId, 0);
             int limit = member.getMaxWeeklyHours() * 60;
             if (assigned > limit) {
+                int fixed = fixedMinutes.getOrDefault(facultyId, 0);
                 findings.add(new Finding(ConflictType.WORKLOAD_EXCEEDED, Severity.MEDIUM,
                         member.getName() + " is assigned " + format(assigned)
-                                + " per week against a limit of " + member.getMaxWeeklyHours() + "h.",
+                                + " per week (" + format(practical) + " practical + " + format(fixed)
+                                + " fixed) against a limit of " + member.getMaxWeeklyHours() + "h.",
                         "Move a practical to a colleague who is under their limit.",
                         null, null, null));
             }

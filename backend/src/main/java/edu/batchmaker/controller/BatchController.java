@@ -39,6 +39,13 @@ public class BatchController {
         return batchService.adjust(request);
     }
 
+    /** Swap two consenting students between their batches for one subject. */
+    @PostMapping("/swap")
+    @PreAuthorize("hasAnyRole('ADMIN','HOD')")
+    public List<BatchResponse> swap(@Valid @RequestBody BatchSwapRequest request) {
+        return batchService.swap(request);
+    }
+
     @DeleteMapping("/subject/{subjectId}")
     @PreAuthorize("hasAnyRole('ADMIN','HOD')")
     public MessageResponse deleteForSubject(@PathVariable Long subjectId) {

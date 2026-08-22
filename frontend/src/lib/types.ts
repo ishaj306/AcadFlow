@@ -371,12 +371,32 @@ export interface FacultyWorkload {
   departmentCode: string
   assignedMinutes: number
   assignedHours: number
+  fixedLoadHours: number
+  totalLoadHours: number
   maxWeeklyHours: number
   utilizationPercent: number
   practicalCount: number
   freeTeachingSlots: number
   status: string
   subjects: string[]
+}
+
+export interface FixedCommitment {
+  id: number
+  title: string
+  commitmentType: string
+  facultyId?: number
+  facultyName?: string
+  labId?: number
+  labName?: string
+  academicTermId?: number
+  dayOfWeek: DayOfWeek
+  startSlotId: number
+  endSlotId: number
+  startTime: string
+  endTime: string
+  durationMinutes: number
+  note?: string
 }
 
 export interface WorkloadSummary {

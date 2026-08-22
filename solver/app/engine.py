@@ -467,8 +467,11 @@ def _add_objective(model, sessions, request: SolveRequest, faculty_by_id,
     overloads = []
     for faculty_id in active_faculty:
         limit = faculty_by_id[faculty_id].max_weekly_minutes
+        base = faculty_by_id[faculty_id].base_load_minutes
         load = model.NewIntVar(0, 10 ** 6, f"load_{faculty_id}")
-        model.Add(load == sum(
+        # Total weekly load = fixed commitments already on the books + the
+        # practical minutes the optimiser assigns here.
+        model.Add(load == base + sum(
             s.duration * v
             for s in sessions
             for c, v in zip(s.candidates, s.vars)
@@ -497,7 +500,8 @@ def _add_objective(model, sessions, request: SolveRequest, faculty_by_id,
     # total deviation from the mean gives the same optimum a smooth gradient to
     # descend, at half the weight so min-max stays the headline criterion.
     if len(loads) > 1:
-        target = sum(s.duration for s in sessions) // len(loads)
+        total_base = sum(faculty_by_id[fid].base_load_minutes for fid in loads)
+        target = (sum(s.duration for s in sessions) + total_base) // len(loads)
         deviations = []
         for faculty_id, load in loads.items():
             deviation = model.NewIntVar(0, 10 ** 6, f"dev_{faculty_id}")

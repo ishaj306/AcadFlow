@@ -11,6 +11,7 @@ import Students from './pages/Students'
 import FacultyPage from './pages/Faculty'
 import Subjects from './pages/Subjects'
 import Laboratories from './pages/Laboratories'
+import FixedLectures from './pages/FixedLectures'
 import Batches from './pages/Batches'
 import Timetable from './pages/Timetable'
 import WhatIf from './pages/WhatIf'
@@ -80,6 +81,7 @@ export default function App() {
         <Route path="/faculty" element={<RequireRole roles={STAFF}><FacultyPage /></RequireRole>} />
         <Route path="/subjects" element={<RequireRole roles={STAFF}><Subjects /></RequireRole>} />
         <Route path="/laboratories" element={<RequireRole roles={STAFF}><Laboratories /></RequireRole>} />
+        <Route path="/fixed-lectures" element={<RequireRole roles={STAFF}><FixedLectures /></RequireRole>} />
         <Route path="/batches" element={<RequireRole roles={STAFF}><Batches /></RequireRole>} />
         <Route path="/timetable" element={<RequireRole roles={STAFF}><Timetable /></RequireRole>} />
         <Route path="/what-if" element={<RequireRole roles={STAFF}><WhatIf /></RequireRole>} />

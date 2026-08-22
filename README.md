@@ -20,9 +20,18 @@ traded away; soft constraints form a weighted objective.
 
 ## Highlights
 
+- **Fixed lectures & commitments** — record the recurring lectures, meetings and
+  reserved-lab slots that already tie up faculty and rooms. The optimiser treats
+  them as immovable blocks and folds their hours into each teacher's total weekly
+  load, so workload is measured as *fixed lecture + practical*, not practicals
+  alone.
 - **Feasibility pre-check** — before generating, a fast resource audit reports
   whether a schedule can exist at all, and if not, exactly what to add (another
   lab, day, or teacher).
+- **Batch swap** — exchange two consenting students between their batches for a
+  subject in one click; a one-for-one swap that leaves both batch sizes intact.
+- **Server-side export of any timetable** — download a draft or the published
+  timetable as real `.xlsx` or PDF, not only the current live one.
 - **Multiple options (A/B/C)** — generate three drafts tuned for different
   priorities (balanced, faculty-friendly, lab-efficient) and compare their scores.
 - **Tunable priorities** — sliders expose the solver's soft-constraint weights.
@@ -118,6 +127,12 @@ set BATCHMAKER_BOOTSTRAP_ADMIN_PASSWORD=your-password-here
 Everything else — departments, terms, working hours, subjects, laboratories,
 faculty, students — is entered by you.
 
+**Deploying beyond localhost?** Two dev conveniences are deliberately gated to the
+`dev` profile (the default): the unauthenticated H2 web console is only exposed
+under `dev`, and the committed default JWT secret is *rejected at startup* under
+any other profile. Set `BATCHMAKER_SECURITY_JWT_SECRET` to a private value (≥ 32
+bytes) before running under `postgres` or any production profile.
+
 ### Entering your college
 
 Sign in and the dashboard shows a **setup checklist** in dependency order. Each
@@ -132,9 +147,11 @@ step links to the right screen and states exactly what is missing.
    file · *Laboratories*
 6. **Faculty** — plus the subjects each is qualified for; one at a time or import
    a CSV/Excel file · *Faculty*
-7. **Students** — one at a time, or import a CSV/Excel file · *Students*
-8. **Practical batches** — generated from divisions and capacities · *Practical Batches*
-9. **Timetable** — generate, validate, approve, publish · *Timetable*
+7. **Fixed lectures** (optional) — the recurring lectures / meetings / reserved
+   labs the practical timetable must work around · *Fixed Lectures*
+8. **Students** — one at a time, or import a CSV/Excel file · *Students*
+9. **Practical batches** — generated from divisions and capacities · *Practical Batches*
+10. **Timetable** — generate, validate, approve, publish · *Timetable*
 
 Two things are worth knowing while entering data:
 
@@ -196,6 +213,12 @@ consecutive periods, faculty, laboratory. Most hard constraints therefore hold b
 construction: an illegal combination simply has no variable. What remains are the
 three mutual-exclusion families, expressed as "at most one of these may occupy
 this period".
+
+**Fixed commitments** (lectures, meetings, reserved labs) expand into blocked
+cells for their faculty member and/or laboratory — feeding H5/H6 exactly like an
+unavailability — and their minutes are added to the faculty member's base load,
+so the workload objective (S2) and the overload guard balance *fixed + practical*
+hours rather than practicals alone.
 
 ### Soft constraints — optimised
 

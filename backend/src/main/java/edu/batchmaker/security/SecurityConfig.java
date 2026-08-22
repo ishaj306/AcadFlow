@@ -32,6 +32,7 @@ public class SecurityConfig {
     private final AppUserDetailsService userDetailsService;
     private final BatchmakerProperties properties;
     private final ObjectMapper objectMapper;
+    private final org.springframework.core.env.Environment environment;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -52,17 +53,26 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // The H2 web console is a full, unauthenticated database browser. It is
+        // useful in local development but must never be reachable in a real
+        // deployment, so it is only opened up under the "dev" profile.
+        boolean devProfile = environment.matchesProfiles("dev");
+
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
-                        .requestMatchers("/api/health", "/actuator/health").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
-                        // Everything else requires a valid token; fine-grained role
-                        // rules live on the service/controller methods via @PreAuthorize.
-                        .anyRequest().authenticated())
+                .authorizeHttpRequests(auth -> {
+                    auth
+                            .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
+                            .requestMatchers("/api/health", "/actuator/health").permitAll();
+                    if (devProfile) {
+                        auth.requestMatchers("/h2-console/**").permitAll();
+                    }
+                    // Everything else requires a valid token; fine-grained role
+                    // rules live on the service/controller methods via @PreAuthorize.
+                    auth.anyRequest().authenticated();
+                })
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) ->

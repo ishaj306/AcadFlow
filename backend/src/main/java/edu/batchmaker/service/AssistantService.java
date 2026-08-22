@@ -157,10 +157,14 @@ public class AssistantService {
                 .orElse(null);
     }
 
-    /** True when the question mentions a distinctive word (3+ letters) of the name. */
+    /** True when the question mentions a distinctive word (3+ letters) of the name.
+     *
+     * <p>Matches on whole words, not substrings, so "rao" no longer matches
+     * "narrow" and "lab" no longer matches "available". */
     private boolean nameMatches(String q, String name) {
         for (String word : name.toLowerCase(Locale.ROOT).split("[^a-z]+")) {
-            if (word.length() >= 3 && q.contains(word)) {
+            if (word.length() >= 3
+                    && java.util.regex.Pattern.compile("\\b" + word + "\\b").matcher(q).find()) {
                 return true;
             }
         }

@@ -22,7 +22,16 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class JwtService {
 
+    /**
+     * The signing key committed to {@code application.yml} for local development.
+     * It is public in the repository, so it must never sign tokens in a real
+     * deployment - startup fails if it is still in use outside the dev profile.
+     */
+    static final String DEV_DEFAULT_SECRET =
+            "dev-only-change-me-batchmaker-timetable-signing-key-2026";
+
     private final BatchmakerProperties properties;
+    private final org.springframework.core.env.Environment environment;
     private SecretKey signingKey;
 
     @PostConstruct
@@ -31,6 +40,11 @@ public class JwtService {
         if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
             throw new IllegalStateException(
                     "batchmaker.security.jwt.secret must be set and at least 32 bytes long.");
+        }
+        if (DEV_DEFAULT_SECRET.equals(secret) && !environment.matchesProfiles("dev")) {
+            throw new IllegalStateException(
+                    "The default development JWT secret is in use outside the 'dev' profile. "
+                            + "Set BATCHMAKER_SECURITY_JWT_SECRET to a private value before deploying.");
         }
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
