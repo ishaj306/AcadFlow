@@ -1,0 +1,9 @@
+﻿lab_code,lab_name,department_code,capacity,lab_type,location,status
+PL1,Programming Lab 1,CSE,30,Programming,Block A - 204,ACTIVE
+PL2,Programming Lab 2,CSE,30,Programming,Block A - 205,ACTIVE
+DBL,Database Lab,CSE,30,Database,Block A - 301,ACTIVE
+NL1,Networking Lab 1,CSE,25,Networking,Block B - 102,ACTIVE
+PL3,Programming Lab 3,IT,30,Programming,Block B - 210,ACTIVE
+WTL,Web Technologies Lab,IT,30,Web,Block B - 201,ACTIVE
+HWL,Hardware Lab,IT,25,Hardware,Block B - 105,ACTIVE
+NL2,Networking Lab 2,IT,25,Networking,Block B - 108,ACTIVE

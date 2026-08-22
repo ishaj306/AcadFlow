@@ -1,0 +1,19 @@
+﻿employee_code,name,email,department_code,designation,max_weekly_hours,subject_codes
+CSE-F01,Dr. Anjali Sharma,cse.f01@college.edu,CSE,Professor,16,CS501;CS504;CS505
+CSE-F02,Prof. Vikram Deshmukh,cse.f02@college.edu,CSE,Associate Professor,18,CS501;CS505
+CSE-F03,Dr. Kavita Rane,cse.f03@college.edu,CSE,Assistant Professor,20,CS501;CS502;CS505
+CSE-F04,Prof. Sandeep Nair,cse.f04@college.edu,CSE,Professor,16,CS501;CS502
+CSE-F05,Dr. Neha Kulkarni,cse.f05@college.edu,CSE,Associate Professor,18,CS502;CS503
+CSE-F06,Prof. Arjun Mehta,cse.f06@college.edu,CSE,Assistant Professor,20,CS502;CS503
+CSE-F07,Dr. Sunita Joshi,cse.f07@college.edu,CSE,Professor,16,CS503;CS504
+CSE-F08,Prof. Rohit Bhosale,cse.f08@college.edu,CSE,Associate Professor,18,CS503;CS504
+CSE-F09,Prof. Pooja Chavan,cse.f09@college.edu,CSE,Assistant Professor,20,CS504;CS505
+IT-F01,Dr. Suresh Menon,it.f01@college.edu,IT,Professor,16,IT501;IT504;IT505
+IT-F02,Prof. Ritu Agarwal,it.f02@college.edu,IT,Associate Professor,18,IT501;IT505
+IT-F03,Dr. Manoj Patil,it.f03@college.edu,IT,Assistant Professor,20,IT501;IT502;IT505
+IT-F04,Prof. Sneha Kadam,it.f04@college.edu,IT,Professor,16,IT501;IT502
+IT-F05,Dr. Amit Verma,it.f05@college.edu,IT,Associate Professor,18,IT502;IT503
+IT-F06,Prof. Deepa Naik,it.f06@college.edu,IT,Assistant Professor,20,IT502;IT503
+IT-F07,Dr. Prakash Rao,it.f07@college.edu,IT,Professor,16,IT503;IT504
+IT-F08,Prof. Shweta Gokhale,it.f08@college.edu,IT,Associate Professor,18,IT503;IT504
+IT-F09,Prof. Nilesh Jadhav,it.f09@college.edu,IT,Assistant Professor,20,IT504;IT505

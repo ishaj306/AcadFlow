@@ -1,0 +1,11 @@
+﻿subject_code,subject_name,department_code,semester,subject_type,practical_duration_min,sessions_per_week,students_per_batch,required_lab_type
+CS501,Java Programming,CSE,5,PRACTICAL,120,1,30,Programming
+CS502,Database Management Systems,CSE,5,PRACTICAL,120,1,30,Database
+CS503,Operating Systems,CSE,5,PRACTICAL,120,1,30,Programming
+CS504,Software Engineering,CSE,5,PRACTICAL,120,1,30,Programming
+CS505,Computer Networks,CSE,5,PRACTICAL,120,1,25,Networking
+IT501,Web Technologies,IT,5,PRACTICAL,120,1,30,Web
+IT502,Data Structures,IT,5,PRACTICAL,120,1,30,Programming
+IT503,Computer Hardware,IT,5,PRACTICAL,120,1,25,Hardware
+IT504,Python Programming,IT,5,PRACTICAL,120,1,30,Programming
+IT505,Information Security,IT,5,PRACTICAL,120,1,25,Networking
