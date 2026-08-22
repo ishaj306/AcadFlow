@@ -395,7 +395,14 @@ export default function Timetable() {
                 className={`cursor-pointer hover:bg-navy-50/60 ${row.id === activeId ? 'bg-navy-50' : ''}`}
                 onClick={() => setSelectedId(row.id)}
               >
-                <Td className="font-medium">{row.name}</Td>
+                <Td className="font-medium">
+                  {row.name}
+                  {row.supersedesId != null && (
+                    <span className="ml-1.5 text-[11px] font-normal text-navy-400">
+                      v{row.version} · replaced #{row.supersedesId}
+                    </span>
+                  )}
+                </Td>
                 <Td>
                   <Badge tone={statusTone(row.status)}>{row.status}</Badge>
                 </Td>

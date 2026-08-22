@@ -70,6 +70,15 @@ public class Timetable {
     @Column(name = "published_at")
     private Instant publishedAt;
 
+    /** Version number within a lineage of published schedules; the first is 1. */
+    @Column(name = "version", nullable = false)
+    private Integer version = 1;
+
+    /** The previously-published timetable this one replaced, if any. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "supersedes_id")
+    private Timetable supersedes;
+
     @Column(length = 1024)
     private String notes;
 }

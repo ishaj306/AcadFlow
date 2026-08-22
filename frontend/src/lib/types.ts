@@ -196,6 +196,8 @@ export interface TimetableSummary {
   solverEngine?: string
   solverStatus?: string
   solverRuntimeMs?: number
+  version: number
+  supersedesId?: number
   entryCount: number
   generatedAt: string
   generatedBy?: string

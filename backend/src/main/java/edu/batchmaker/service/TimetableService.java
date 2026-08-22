@@ -529,9 +529,16 @@ public class TimetableService {
                     Map.of("hardViolations", validation.hardViolations()));
         }
 
-        // Supersede whatever was live before.
-        timetableRepository.findByStatusOrderByGeneratedAtDesc(TimetableStatus.PUBLISHED)
-                .forEach(previous -> previous.setStatus(TimetableStatus.ARCHIVED));
+        // Supersede whatever was live before, recording the lineage: this version
+        // links to the one it replaces and takes the next version number.
+        List<Timetable> currentlyPublished =
+                timetableRepository.findByStatusOrderByGeneratedAtDesc(TimetableStatus.PUBLISHED);
+        Timetable superseded = currentlyPublished.isEmpty() ? null : currentlyPublished.get(0);
+        if (superseded != null && !superseded.getId().equals(timetable.getId())) {
+            timetable.setSupersedes(superseded);
+            timetable.setVersion((superseded.getVersion() == null ? 1 : superseded.getVersion()) + 1);
+        }
+        currentlyPublished.forEach(previous -> previous.setStatus(TimetableStatus.ARCHIVED));
 
         Instant now = Instant.now();
         timetable.setStatus(TimetableStatus.PUBLISHED);
