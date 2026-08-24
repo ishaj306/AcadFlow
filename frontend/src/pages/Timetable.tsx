@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, api, formatDateTime, getToken } from '../lib/api'
 import type {
   FeasibilityReport,
+  FixedCommitment,
   GenerationResult,
   TimetableDetail,
   TimetableSummary,
@@ -92,6 +93,12 @@ export default function Timetable() {
     queryKey: ['timetable', activeId],
     queryFn: () => api<TimetableDetail>(`/timetable/${activeId}`),
     enabled: activeId != null,
+  })
+
+  // Whole-class fixed lectures, drawn into the grid alongside the practicals.
+  const lectures = useQuery({
+    queryKey: ['fixed-commitments'],
+    queryFn: () => api<FixedCommitment[]>('/fixed-commitments'),
   })
 
   const generate = useMutation({
@@ -640,6 +647,7 @@ export default function Timetable() {
             days={detail.data.days}
             timeSlots={detail.data.timeSlots}
             entries={filtered}
+            lectures={lectures.data ?? []}
             emptyHint="No sessions match the selected filters."
             onEntryClick={editMode && summary?.status === 'DRAFT' ? setEditingEntry : undefined}
           />

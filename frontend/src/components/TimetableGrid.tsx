@@ -1,5 +1,5 @@
 import { hhmm, titleCase } from '../lib/api'
-import type { DayOfWeek, TimeSlot, TimetableEntry } from '../lib/types'
+import type { DayOfWeek, FixedCommitment, TimeSlot, TimetableEntry } from '../lib/types'
 import { EmptyState } from './ui'
 
 /**
@@ -40,6 +40,7 @@ export default function TimetableGrid({
   days,
   timeSlots,
   entries,
+  lectures = [],
   labels = {},
   highlightEntryId,
   emptyHint,
@@ -48,6 +49,12 @@ export default function TimetableGrid({
   days: DayOfWeek[]
   timeSlots: TimeSlot[]
   entries: TimetableEntry[]
+  /**
+   * Whole-class fixed lectures (from the Fixed Lectures page). Practicals and
+   * lectures live in different periods, so a lecture simply fills the cell it
+   * starts in. Purely presentational — they are constraints, not solver output.
+   */
+  lectures?: FixedCommitment[]
   labels?: GridLabels
   highlightEntryId?: number
   emptyHint?: string
@@ -57,7 +64,7 @@ export default function TimetableGrid({
   const { primary = (e) => e.subjectName, showFaculty = true, showLab = true, showBatch = true } =
     labels
 
-  if (entries.length === 0) {
+  if (entries.length === 0 && lectures.length === 0) {
     return (
       <EmptyState
         title="Nothing scheduled"
@@ -75,6 +82,15 @@ export default function TimetableGrid({
     const bucket = startingAt.get(key)
     if (bucket) bucket.push(entry)
     else startingAt.set(key, [entry])
+  }
+
+  // Whole-class lectures, indexed the same way.
+  const lecturesAt = new Map<string, FixedCommitment[]>()
+  for (const lecture of lectures) {
+    const key = `${lecture.dayOfWeek}|${lecture.startSlotId}`
+    const bucket = lecturesAt.get(key)
+    if (bucket) bucket.push(lecture)
+    else lecturesAt.set(key, [lecture])
   }
 
   return (
@@ -128,6 +144,7 @@ export default function TimetableGrid({
 
                 {days.map((day) => {
                   const cell = startingAt.get(`${day}|${slot.id}`) ?? []
+                  const cellLectures = lecturesAt.get(`${day}|${slot.id}`) ?? []
                   return (
                     <td
                       key={day}
@@ -135,6 +152,24 @@ export default function TimetableGrid({
                       style={{ minWidth: 170 }}
                     >
                       <div className="flex flex-col gap-1">
+                        {cellLectures.map((lecture) => (
+                          <div
+                            key={`lec-${lecture.id}`}
+                            className="rounded-sm border-l-[3px] border-l-[#8a3b4c] bg-[#f4ece2] px-2 py-1.5"
+                          >
+                            <div className="text-[12px] leading-tight font-semibold text-[#6b2f3d]">
+                              {lecture.title}
+                            </div>
+                            <div className="tabular mt-0.5 text-[10px] text-navy-500">
+                              {hhmm(lecture.startTime)}–{hhmm(lecture.endTime)} · Whole class
+                            </div>
+                            {lecture.labName && (
+                              <div className="truncate text-[11px] text-navy-500">
+                                {lecture.labName}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                         {cell.map((entry) => (
                           <div
                             key={entry.id}
